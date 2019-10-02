@@ -61,12 +61,7 @@
 +	data_len = rxs->rs_datalen;
 +	data_addr = buf_addr + 48;
 +	        
-+	if (rxsp->status11 & AR_CRCErr){
-+ 	      if (rxs->rs_rate >= 0x80){
-+	            csi_record_payload(data_addr,data_len);
-+                    csi_record_status(ah,rxs,rxsp,data_addr);
-+	        }
-+        }else{
++	if (!(rxsp->status11 & AR_CRCErr) && !(rxs->rs_phyerr) )){
 +            if  (rxs->rs_more == 1)
 +                csi_record_payload(data_addr,data_len);
 +
