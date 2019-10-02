@@ -7,7 +7,7 @@
  *
  *         Author:  Yaxiong Xie 
  *         Email :  <xieyaxiongfly@gmail.com>
- *   Organization:  WANS group @ Nanyang Technological University 
+ *   Organization:  WANDS group @ Nanyang Technological University 
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@
 int main(int argc, char *argv[])
 {
 	int     sockfd;
-    	int     i;
+	long 	interval;
+    	int     i,payload_len;
 	struct  ifreq if_idx;
 	struct  ifreq if_mac;
 	int     tx_len = 0,Cnt;
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
 	
     if (argc == 1)
     {
-        printf("Usage:   %s ifName DstMacAddr NumOfPacketToSend\n",argv[0]);
+        printf("Usage:   %s ifName DstMacAddr NumOfPacketToSend packetinterval payloadlen\n",argv[0]);
         printf("Example: %s wlan0 00:7F:5D:3E:4A 100\n",argv[0]);
         exit(0);
     }
@@ -91,7 +92,14 @@ int main(int argc, char *argv[])
     else
         Cnt = 1;
 	
- 
+    if(argc > 4)
+	interval = atoi(argv[4]);
+    else
+	interval = 5000;
+    if(argc > 5)
+	payload_len = atoi(argv[5]);
+    else
+	payload_len = 40;
 	/* Open RAW socket to send on */
 	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1) {
 	    perror("socket");
@@ -130,11 +138,11 @@ int main(int argc, char *argv[])
  
 	/* Packet data 
      * We just set it to 0xaa you send arbitrary payload you like*/
-    for(i=1;i<=1000;i++){
+    for(i=1;i<=payload_len;i++){
         
 	    sendbuf[tx_len++] = 0xaa;
     } 
-    printf("Packet Length is: %d,pkt_num is: %d\n",tx_len,Cnt); 
+    //printf("Packet Length is: %d,pkt_num is: %d\n",tx_len,Cnt); 
 	
     /* Index of the network device */
 	socket_address.sll_ifindex = if_idx.ifr_ifindex;
@@ -161,18 +169,20 @@ int main(int argc, char *argv[])
 	socket_address.sll_addr[5] = DstAddr[5];
  
 	/* Send packet */
+    int sum=Cnt;
     for(;Cnt>0;Cnt--)
     {
         /* you set the time interval between two transmitting packets 
          * for example, here we set it to 50 microseconds
          * set to 0 if you don't need it
          */
-        if (usleep(50) == -1){
+        if (usleep(interval) == -1){	
             printf("sleep failed\n");
         }
         if (sendto(sockfd, sendbuf, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0){
-            printf("Send failed\n");
+            printf("Send \n");
         }
+	printf("Send %dth packet\n",sum-Cnt+1);
     }
 	
 	return 0;
